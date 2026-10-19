@@ -85,9 +85,18 @@ async function loadServer() {
     if (Array.isArray(j) && j.length) { snaps = j; serverMode = true; }
   } catch {}
 }
-const allPoints = () => serverMode
-  ? snaps.concat(history.filter(p => p.t > snaps[snaps.length - 1].t))
-  : history;
+// Chart shows one point per 30 minutes. Server snapshots are already 30 min apart;
+// otherwise keep the first point of each 30-minute slot from the locally recorded history.
+const CHART_STEP_MS = 30 * 60 * 1000;
+const every30 = (pts) => {
+  const out = []; let slot = null;
+  for (const p of pts) {
+    const s = Math.floor(p.t / CHART_STEP_MS);
+    if (s !== slot) { out.push(p); slot = s; }
+  }
+  return out;
+};
+const allPoints = () => serverMode ? snaps : every30(history);
 history.slice(-1).forEach(p => Object.assign(last, p.v));
 
 // ---------------- data fetching ----------------
