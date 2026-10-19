@@ -24,3 +24,4 @@ jobs:
           git add data/snapshots.json
           git diff --cached --quiet || git commit -m "Update prices"
           git push
+          
