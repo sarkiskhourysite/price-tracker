@@ -16,6 +16,7 @@
   .controls { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:8px; }
   button { background:#2f6feb; color:#fff; border:0; border-radius:6px; padding:7px 12px; font-size:.85rem; }
   button.alt { background:#2b3540; }
+  button.sel { background:#2f6feb !important; }
   label { font-size:.85rem; color:var(--muted); }
   .chartbox { position:relative; height:55vh; min-height:300px; }
   .tablewrap { overflow:auto; max-height:45vh; }
@@ -38,6 +39,13 @@
   <div class="controls">
     <label><input type="checkbox" id="log" checked> Log scale</label>
     <button class="alt" id="awake">Keep screen on: off</button>
+    <span id="ranges" style="display:flex;gap:6px;flex-wrap:wrap">
+      <button class="alt" data-days="1">Day</button>
+      <button class="alt" data-days="7">Week</button>
+      <button class="alt" data-days="30">Month</button>
+      <button class="alt" data-days="365">Year</button>
+      <button class="alt" data-days="0">All</button>
+    </span>
   </div>
   <div class="chartbox"><canvas id="chart"></canvas></div>
   <div class="status" style="margin:6px 0 0">Gold/silver are ~thousands/tens of USD while currencies are near 1 USD, so log scale keeps all lines visible.</div>
@@ -157,19 +165,41 @@ document.getElementById('log').addEventListener('change', e => {
 const fmtTime = t => new Date(t).toLocaleString([], { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit' });
 const fmtVal  = (k, v) => v == null ? '–' : (v >= 100 ? v.toFixed(2) : v >= 1 ? v.toFixed(4) : v.toFixed(6));
 
+let rangeDays = 7;   // default view: one week
+try { rangeDays = Number(localStorage.getItem('lp_range') ?? 7); } catch {}
 function renderChart() {
-  const pts = allPoints();
-  chart.data.labels = pts.map(p => fmtTime(p.t));
+  let pts = allPoints();
+  if (rangeDays > 0) {
+    const from = Date.now() - rangeDays * 86400000;
+    pts = pts.filter(p => p.t >= from);
+  }
+  // keep the chart light: at most ~500 points
+  if (pts.length > 500) {
+    const step = Math.ceil(pts.length / 500);
+    pts = pts.filter((_, i) => i % step === 0 || i === pts.length - 1);
+  }
+  const longRange = rangeDays === 0 || rangeDays > 2;
+  const lab = t => longRange
+    ? new Date(t).toLocaleDateString([], { month:'short', day:'numeric', year: rangeDays === 365 || rangeDays === 0 ? '2-digit' : undefined })
+    : new Date(t).toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+  chart.data.labels = pts.map(p => lab(p.t) + (longRange ? '' : ''));
+  chart.options.plugins.tooltip.callbacks.title = items => items.length ? fmtTime(pts[items[0].dataIndex].t) : '';
   ASSETS.forEach((a, i) => { chart.data.datasets[i].data = pts.map(p => p.v[a.key] ?? null); });
   chart.update();
+  document.querySelectorAll('#ranges button').forEach(b => b.classList.toggle('sel', Number(b.dataset.days) === rangeDays));
 }
+document.querySelectorAll('#ranges button').forEach(b => b.onclick = () => {
+  rangeDays = Number(b.dataset.days);
+  try { localStorage.setItem('lp_range', rangeDays); } catch {}
+  renderChart();
+});
 function renderLive() {
   document.getElementById('live').innerHTML = ASSETS.map(a =>
     `<div class="pill" style="border-left:4px solid ${a.color}">${a.name}<b>${fmtVal(a.key, last[a.key])}</b></div>`).join('');
 }
 function renderTable() {
   const head = '<tr><th>Time</th>' + ASSETS.map(a => `<th>${a.name}</th>`).join('') + '</tr>';
-  const rows = snaps.slice().reverse().map(s =>
+  const rows = snaps.slice(-500).reverse().map(s =>
     `<tr><td>${fmtTime(s.t)}</td>` + ASSETS.map(a => `<td>${fmtVal(a.key, s.v[a.key])}</td>`).join('') + '</tr>').join('');
   document.getElementById('table').innerHTML = head + rows;
 }
