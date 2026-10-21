@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Price Tracker – Start</title>
+<style>
+  :root { --bg:#0f1419; --card:#1a2129; --text:#e6edf3; --muted:#8b98a5; --line:#2b3540; --blue:#2f6feb; }
+  * { box-sizing:border-box; }
+  body { margin:0; min-height:100vh; padding:20px 16px; background:var(--bg); color:var(--text);
+         font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif; display:flex; flex-direction:column; align-items:center; }
+  .wrap { width:100%; max-width:560px; }
+  h1 { font-size:1.5rem; margin:10px 0 4px; }
+  .sub { color:var(--muted); font-size:.9rem; margin-bottom:22px; }
+  a.tile { display:block; text-decoration:none; color:inherit; background:var(--card); border:1px solid var(--line);
+           border-radius:14px; padding:18px; margin-bottom:14px; transition:border-color .15s, transform .05s; }
+  a.tile:hover, a.tile:focus { border-color:var(--blue); outline:none; }
+  a.tile:active { transform:scale(.99); }
+  .row { display:flex; align-items:center; gap:14px; }
+  .icon { flex:0 0 52px; height:52px; border-radius:12px; background:#22303d; display:flex; align-items:center; justify-content:center; }
+  .icon svg { width:30px; height:30px; }
+  .title { font-size:1.1rem; font-weight:700; }
+  .desc { color:var(--muted); font-size:.85rem; margin-top:4px; line-height:1.4; }
+  ul { margin:10px 0 0; padding-left:18px; color:var(--muted); font-size:.82rem; line-height:1.5; }
+  .go { margin-top:12px; display:inline-block; background:var(--blue); color:#fff; border-radius:8px; padding:8px 14px; font-size:.9rem; font-weight:600; }
+  .data { color:var(--muted); font-size:.8rem; text-align:center; margin-top:16px; min-height:1.2em; }
+  .note { color:var(--muted); font-size:.75rem; text-align:center; margin-top:8px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Price Tracker</h1>
+  <div class="sub">Gold, silver, CHF, EUR, JPY and GBP in USD. Choose a page:</div>
+
+  <a class="tile" href="index.html">
+    <div class="row">
+      <div class="icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#f5c518" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="3,17 8,11 12,14 21,5"/><polyline points="3,21 9,16 14,18 21,12" stroke="#4dabf7"/>
+        </svg>
+      </div>
+      <div>
+        <div class="title">Live prices</div>
+        <div class="desc">All six assets on one chart, plus the table of saved prices.</div>
+      </div>
+    </div>
+    <ul>
+      <li>Compare assets as % change or in USD</li>
+      <li>Show or hide each curve</li>
+      <li>Day / Week / Month / Year / All</li>
+      <li>Optional indicator chart for one asset</li>
+    </ul>
+    <span class="go">Open live prices →</span>
+  </a>
+
+  <a class="tile" href="asset.html">
+    <div class="row">
+      <div class="icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#b197fc" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 4v16h18"/><polyline points="6,15 10,10 14,13 19,6"/>
+          <line x1="6" y1="9" x2="19" y2="9" stroke="#f0883e" stroke-dasharray="2 2"/>
+        </svg>
+      </div>
+      <div>
+        <div class="title">Asset analysis</div>
+        <div class="desc">One asset at a time with five stacked charts, price alerts and an hourly table.</div>
+      </div>
+    </div>
+    <ul>
+      <li>Two moving averages, RSI, MACD, Bollinger Bands</li>
+      <li>Backtest of simple buy/sell rules</li>
+      <li>Price alerts (while the page is open)</li>
+    </ul>
+    <span class="go">Open asset analysis →</span>
+  </a>
+
+  <div class="data" id="data"></div>
+  <div class="note">Prices are saved automatically every 30 minutes. Not financial advice.</div>
+</div>
+
+<script>
+// Show when the last price was saved (optional; the page works without it).
+(async () => {
+  try {
+    const r = await fetch('data/snapshots.json', { cache:'no-store' });
+    if (!r.ok) return;
+    const rows = await r.json();
+    if (!Array.isArray(rows) || !rows.length) return;
+    const last = rows[rows.length - 1].t;
+    const mins = Math.round((Date.now() - last) / 60000);
+    const ago = mins < 90 ? mins + ' min ago' : mins < 2880 ? Math.round(mins / 60) + ' hours ago' : Math.round(mins / 1440) + ' days ago';
+    document.getElementById('data').textContent = rows.length + ' saved rows · last update ' + ago;
+  } catch {}
+})();
+</script>
+</body>
+</html>
