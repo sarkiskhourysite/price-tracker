@@ -1,0 +1,219 @@
+=====================================================================
+ GUIDE TO THE 5 INDICATORS IN YOUR PRICE TRACKER
+=====================================================================
+
+IMPORTANT FIRST
+- This is an explanation of how to read charts. It is NOT financial
+  advice, and I am not a financial advisor.
+- No indicator predicts prices. Each one describes what the price HAS
+  been doing, and traders use that as a hint about what MAY happen.
+- Indicators are often wrong. Never rely on one alone, and never risk
+  money you cannot afford to lose.
+
+All indicators in your app use ONE PRICE PER HOUR, in USD, taken from
+the prices your tracker saved. "Hours" in the settings means hourly
+points (10 hours = the last 10 hourly prices).
+
+
+---------------------------------------------------------------------
+ 1. TWO MOVING AVERAGES  (a "fast" line and a "slow" line)
+---------------------------------------------------------------------
+WHAT IT IS
+A moving average (MA) is the average price over the last N hours. It
+smooths the small ups and downs so you can see the direction.
+  - FAST average (short, e.g. 20 hours): follows the price closely.
+  - SLOW average (long, e.g. 50 hours): shows the bigger trend.
+  - SMA = simple average. EMA = gives more weight to recent prices, so
+    it reacts faster.
+
+HOW TO READ IT
+  - Price above both lines, lines rising      -> uptrend.
+  - Price below both lines, lines falling     -> downtrend.
+  - Fast line crosses ABOVE the slow line     -> green triangle on the
+    chart. Traders call it a possible BUY signal ("the trend may be
+    turning up").
+  - Fast line crosses BELOW the slow line     -> red triangle. A
+    possible SELL signal ("the trend may be turning down").
+  - Lines tangled together and crossing often -> the price is moving
+    sideways. The signals are mostly noise then.
+
+LIMITS
+  - It LAGS: the signal arrives after the move has already started.
+  - In a sideways market it gives many false signals.
+
+SETTINGS IN THE APP
+  Average type (Simple / Exponential), Fast hours, Slow hours.
+  The fast value should be smaller than the slow one.
+
+
+---------------------------------------------------------------------
+ 2. RSI  (Relative Strength Index)
+---------------------------------------------------------------------
+WHAT IT IS
+A number between 0 and 100 that measures how fast and how strongly
+the price has risen or fallen recently.
+
+HOW TO READ IT
+  - Above 70  -> the price rose fast. It may be "stretched" (overbought)
+                 and could pull back. It is NOT an automatic sell.
+  - Below 30  -> the price fell fast. It may be "oversold" and could
+                 bounce. It is NOT an automatic buy.
+  - Around 50 -> balanced, no strong push either way.
+  - In a strong uptrend RSI can stay above 70 for a long time. In a
+    strong downtrend it can stay below 30. So use it with the trend.
+
+LIMITS
+  - It works best when the price moves up and down in a range. In a
+    strong trend, its warnings come too early.
+
+SETTINGS IN THE APP
+  RSI hours (7 = faster and jumpier, 14 = standard, 21 = smoother).
+
+
+---------------------------------------------------------------------
+ 3. MACD  (Moving Average Convergence Divergence)
+---------------------------------------------------------------------
+WHAT IT IS
+It compares two exponential averages (12 hours and 26 hours). The
+difference is the MACD line. A third, smoother line (9 hours) is the
+SIGNAL line. The bars show the gap between MACD and the signal line.
+(These 12 / 26 / 9 values are the standard ones and are fixed.)
+
+HOW TO READ IT
+  - MACD line crosses ABOVE the signal line -> momentum turning up
+    (green bars appear above the zero line).
+  - MACD line crosses BELOW the signal line -> momentum turning down
+    (red bars appear below the zero line).
+  - Bars getting SHORTER means the push is weakening, even if the price
+    is still moving the same way.
+  - MACD above zero means the short-term trend is above the long-term
+    trend. Below zero means the opposite.
+
+LIMITS
+  - Like the moving averages, it lags. It gives many false crosses when
+    the price moves sideways.
+
+SETTINGS IN THE APP
+  None (fixed at 12 / 26 / 9).
+
+
+---------------------------------------------------------------------
+ 4. BOLLINGER BANDS
+---------------------------------------------------------------------
+WHAT IT IS
+A middle line (a simple moving average) with an upper and a lower band
+around it. The bands are placed a number of "standard deviations" away,
+which simply means: the more the price swings, the wider the bands.
+
+HOW TO READ IT
+  - Price near the UPPER band   -> stretched up. Could cool off.
+  - Price near the LOWER band   -> stretched down. Could bounce.
+  - Price riding along the upper band in a strong trend is normal.
+    Touching a band is not a signal by itself.
+  - Bands NARROW (squeeze)      -> the market is quiet. A bigger move
+    often follows, but the bands do not tell you which direction.
+  - Bands WIDE                  -> the market is volatile. Use smaller
+    positions or wider stop-losses.
+
+LIMITS
+  - A touch of the band is not a reason to buy or sell. Price can walk
+    along a band for a long time.
+
+SETTINGS IN THE APP
+  Bands hours (10 / 20 / 50) and Width (1.5 / 2 / 2.5). Wider = fewer
+  touches. The standard setting is 20 hours and width 2.
+
+
+---------------------------------------------------------------------
+ 5. BACKTEST
+---------------------------------------------------------------------
+WHAT IT IS
+It replays a simple rule on your saved price history and shows what
+WOULD have happened. The chart starts at 100 at the beginning of the
+selected period. The orange line is the rule. The grey line is simply
+holding the asset the whole time.
+
+THE RULES YOU CAN TEST
+  - Fast average above slow average : in the asset while the fast line
+                                      is above the slow line, in cash
+                                      otherwise.
+  - RSI                             : buy when RSI < 30, sell when > 70.
+  - MACD                            : in the asset while MACD is above
+                                      its signal line.
+  - Bollinger Bands                 : buy below the lower band, sell when
+                                      the price rises above the middle.
+
+WHAT THE NUMBERS MEAN
+  - Closed trades : how many buy-then-sell rounds were completed.
+  - Winning       : the share of closed trades that made money.
+  - Rule result   : total gain or loss of the rule in the period.
+  - Just holding  : gain or loss if you had simply kept the asset.
+  - Worst drop    : the biggest fall from a high point of the orange
+                    line. It tells you how much pain you would have
+                    had to sit through.
+  - Cost per trade: a fee or spread (in %) taken at each buy and sell.
+                    Keep it above 0, otherwise results look too good.
+
+HOW TO JUDGE IT
+  - A rule is only interesting if it beats "just holding" AFTER costs,
+    with a worst drop you could live with.
+  - Fewer than about 10 closed trades means the result is luck, not
+    proof. The app shows a warning. Use Month / Year / All and load
+    past prices to get more history.
+  - The backtest looks at the past only. A rule that worked before can
+    fail tomorrow.
+  - Do NOT keep changing the settings until the result looks good. That
+    is called overfitting: it fits the past perfectly and fails on new
+    data. Choose sensible settings first and test them once.
+  - It assumes you could buy and sell at the saved hourly price, with
+    no delays. Real trading is a little worse.
+
+
+---------------------------------------------------------------------
+ HOW TO USE THEM TOGETHER (a simple routine)
+---------------------------------------------------------------------
+1. TREND: use the two moving averages. Is the price above or below the
+   slow average? Trade with that direction rather than against it.
+2. TIMING: look at RSI and MACD. Do they agree with the trend? For
+   example, in an uptrend, an RSI dip toward 30-40 or a MACD turning up
+   again can mark a better entry than buying after a big jump.
+3. RISK: look at the Bollinger Bands. Wide bands = big swings, so use a
+   smaller position and a wider stop-loss.
+4. TEST: before trusting any rule, check the Backtest over a long
+   period (Month / Year / All).
+5. ALERT: set a price alert or a "fast crosses slow" alert so the page
+   tells you when something changes (only while the page is open).
+
+Do not stack many indicators that say the same thing. MACD and the
+moving averages, for example, are both built from averages, so they
+often agree. Using one for trend, one for momentum (RSI) and one for
+volatility (Bollinger Bands) gives more different information.
+
+
+---------------------------------------------------------------------
+ THINGS NO INDICATOR CAN SEE
+---------------------------------------------------------------------
+- Central bank interest-rate decisions (US Fed, ECB, Bank of England,
+  Bank of Japan, Swiss National Bank).
+- Inflation and jobs reports, especially from the US.
+- The overall strength of the US dollar.
+- Wars, crises and sudden news. Gold and the Swiss franc often rise
+  when investors are afraid.
+Big announcements can move prices much more than any indicator
+suggests. Many traders reduce or close positions before them.
+
+
+---------------------------------------------------------------------
+ LIMITS OF YOUR TRACKER'S DATA
+---------------------------------------------------------------------
+- Prices come from free sources and can be delayed.
+- Currency prices on the live page update slowly, so do not use them
+  for very fast trading.
+- Hourly points mean the indicators react to slow moves, not to
+  minute-by-minute ones.
+- The history is only as long as you have saved or loaded. Short
+  history makes every indicator less reliable.
+
+Good habits matter more than any signal: decide in advance how much
+you can afford to lose, where you will exit if you are wrong, and keep
+each trade small compared to your total money.
