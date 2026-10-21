@@ -77,8 +77,8 @@
         <option value="bt">Backtest</option>
       </select>
     </label>
-    <label>for <select id="indasset"></select></label>
   </div>
+  <div class="controls" id="indchips"></div>
   <div class="controls">
     <label class="g-ma">Average <select id="matype"><option value="SMA">Simple</option><option value="EMA">Exponential</option></select></label>
     <label class="g-ma">Fast (h) <select id="mafast"><option>5</option><option>10</option><option>20</option><option>30</option></select></label>
@@ -454,9 +454,13 @@ function renderIndicator() {
   document.getElementById('indstats').innerHTML = stats;
 }
 function initIndicatorControls() {
-  const as = document.getElementById('indasset');
-  as.innerHTML = ASSETS.map(a => `<option value="${a.key}">${a.name}</option>`).join('');
-  [['ind','ind',false],['indasset','asset',false],['matype','type',false],['mafast','fast',true],['maslow','slow',true],['rsin','rsi',true],['bbn','bbn',true],['bbk','bbk',true],['rule','rule',false]]
+  const box = document.getElementById('indchips');
+  const mark = () => box.querySelectorAll('.cchip').forEach(b => b.classList.toggle('on', b.dataset.key === P.asset));
+  box.innerHTML = '<span class="status" style="margin:0">Chart below – choose asset:</span>' +
+    ASSETS.map(a => `<button class="alt cchip" data-key="${a.key}" style="color:${a.color}">${a.name}</button>`).join('');
+  box.onclick = e => { const k = e.target.dataset.key; if (!k) return; P.asset = k; setPref('lp_indasset', k); mark(); renderIndicator(); };
+  mark();
+  [['ind','ind',false],['matype','type',false],['mafast','fast',true],['maslow','slow',true],['rsin','rsi',true],['bbn','bbn',true],['bbk','bbk',true],['rule','rule',false]]
     .forEach(([id, key, num]) => { const el = document.getElementById(id); el.value = String(P[key]);
       el.onchange = () => { P[key] = num ? Number(el.value) : el.value; setPref('lp_' + id, P[key]); renderIndicator(); if (id === 'ind' && ichart.resize) ichart.resize(); }; });
   const c = document.getElementById('cost'); c.value = P.cost;
