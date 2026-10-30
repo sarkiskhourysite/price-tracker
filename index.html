@@ -39,9 +39,9 @@
 <body>
 <h1>Live prices in USD</h1>
 <div class="status" id="status">Starting…</div>
-
+ 
 <div class="live" id="live"></div>
-
+ 
 <div class="card">
   <div class="controls">
     <label>View
@@ -64,7 +64,7 @@
   <div class="chartbox"><canvas id="chart"></canvas></div>
   <div class="status" style="margin:6px 0 0">Gold/silver are ~thousands/tens of USD while currencies are near 1 USD, so log scale keeps all lines visible.</div>
 </div>
-
+ 
 <div class="card" id="indcard">
   <div class="controls">
     <label>Indicator
@@ -105,7 +105,7 @@
     <div class="stats" id="indstats"></div>
   </div>
 </div>
-
+ 
 <div class="card">
   <div class="controls">
     <strong>Snapshots every 30 minutes</strong>
@@ -114,7 +114,7 @@
   </div>
   <div class="tablewrap"><table id="table"></table></div>
 </div>
-
+ 
 <script>
 // ---------------- configuration ----------------
 const ASSETS = [
@@ -130,7 +130,7 @@ const FX_EVERY_MS       = 5 * 60 * 1000;    // currency refresh (source updates 
 const SNAPSHOT_EVERY_MS = 30 * 60 * 1000;   // table row
 const MAX_POINTS        = 3000;
 const LS = { hist:'lp_history', snaps:'lp_snaps' };
-
+ 
 // ---------------- storage ----------------
 const load = (k) => { try { return JSON.parse(localStorage.getItem(k)) || []; } catch { return []; } };
 const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
@@ -161,7 +161,7 @@ const every30 = (pts) => {
 };
 const allPoints = () => serverMode ? snaps : every30(history);
 history.slice(-1).forEach(p => Object.assign(last, p.v));
-
+ 
 // ---------------- data fetching ----------------
 async function getJSON(url) {
   const r = await fetch(url, { cache:'no-store' });
@@ -184,7 +184,7 @@ async function fetchFx() {
   });
   return out;
 }
-
+ 
 // ---------------- chart ----------------
 const ctx = document.getElementById('chart').getContext('2d');
 const chart = new Chart(ctx, {
@@ -214,10 +214,10 @@ const chart = new Chart(ctx, {
 });
 document.getElementById('log').addEventListener('change', () => renderChart());
 document.getElementById('mode').addEventListener('change', () => renderChart());
-
+ 
 const fmtTime = t => new Date(t).toLocaleString([], { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit' });
 const fmtVal  = (k, v) => v == null ? '–' : (v >= 100 ? v.toFixed(2) : v >= 1 ? v.toFixed(4) : v.toFixed(6));
-
+ 
 let rangeDays = 7;   // default view: one week
 try { rangeDays = Number(localStorage.getItem('lp_range') ?? 7); } catch {}
 function renderChart() {
@@ -268,10 +268,10 @@ function renderTable() {
     `<tr><td>${fmtTime(s.t)}</td>` + ASSETS.map(a => `<td>${fmtVal(a.key, s.v[a.key])}</td>`).join('') + '</tr>').join('');
   document.getElementById('table').innerHTML = head + rows;
 }
-
+ 
 // ---------------- main loop ----------------
 const setStatus = (m) => document.getElementById('status').textContent = m;
-
+ 
 async function tick() {
   const errs = [];
   try { Object.assign(last, await fetchMetals()); } catch (e) { errs.push('metals: ' + e.message); }
@@ -294,8 +294,8 @@ async function tick() {
   setStatus((errs.length ? 'Error – ' + errs.join(' | ') + '. ' : '') +
             'Last update: ' + new Date().toLocaleTimeString() + ' · refresh every 30 s');
 }
-
-
+ 
+ 
 // ================= 1) show / hide curves =================
 const pref = (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } };
 const setPref = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
@@ -314,7 +314,7 @@ function buildCurveChips() {
   };
 }
 function markCurveChips() { document.querySelectorAll('#curves .cchip').forEach(b => b.classList.toggle('on', !hiddenKeys.includes(b.dataset.key))); }
-
+ 
 // ================= 2) one indicator chart =================
 const P = { ind:pref('lp_ind', 'none'), asset:pref('lp_indasset', 'XAU'), type:pref('lp_matype', 'SMA'), fast:pref('lp_mafast', 20), slow:pref('lp_maslow', 50),
             rsi:pref('lp_rsin', 14), bbn:pref('lp_bbn', 20), bbk:pref('lp_bbk', 2), regk:pref('lp_regk', 2), rule:pref('lp_rule', 'ma'), cost:pref('lp_cost', 0.05) };
@@ -500,12 +500,12 @@ function initIndicatorControls() {
   c.onchange = () => { P.cost = Math.max(0, parseFloat(c.value) || 0); setPref('lp_cost', P.cost); renderIndicator(); };
 }
 buildCurveChips(); initIndicatorControls();
-
+ 
 // ---------------- buttons ----------------
 const pad = n => String(n).padStart(2, '0');
 const localStamp = t => { const d = new Date(t);
   return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`; };
-
+ 
 document.getElementById('csv').onclick = async () => {
   if (!snaps.length) { alert('No rows in the table yet.'); return; }
   // ALL accumulated rows, oldest first
@@ -513,7 +513,7 @@ document.getElementById('csv').onclick = async () => {
     .concat(snaps.map(s => [localStamp(s.t), ...ASSETS.map(a => s.v[a.key] ?? '')].join(',')));
   const blob = new Blob(['﻿' + lines.join('\n')], { type:'text/csv' });
   const name = 'snapshots_' + localStamp(Date.now()).slice(0, 10) + '.csv';
-
+ 
   // 1) Computer (Chrome/Edge): "Save as" dialog to pick folder and file name
   try {
     if (window.showSaveFilePicker) {
@@ -523,7 +523,7 @@ document.getElementById('csv').onclick = async () => {
       return;
     }
   } catch (e) { if (e.name === 'AbortError') return; }
-
+ 
   // 2) Phone: share sheet, choose Files / Drive / WhatsApp / email ...
   try {
     const file = new File([blob], name, { type:'text/csv' });
@@ -532,7 +532,7 @@ document.getElementById('csv').onclick = async () => {
       return;
     }
   } catch (e) { if (e.name === 'AbortError') return; }
-
+ 
   // 3) Fallback: normal download
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a'); a.href = url; a.download = name; a.click();
@@ -551,7 +551,7 @@ document.getElementById('awake').onclick = async (e) => {
     else { wake = await navigator.wakeLock.request('screen'); e.target.textContent = 'Keep screen on: ON'; }
   } catch { alert('Keeping the screen on is not supported here.'); }
 };
-
+ 
 renderLive();
 loadServer().then(() => {
   renderChart(); renderTable();
