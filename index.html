@@ -74,6 +74,7 @@
         <option value="rsi">RSI</option>
         <option value="macd">MACD</option>
         <option value="bb">Bollinger Bands</option>
+        <option value="reg">Linear regression</option>
         <option value="bt">Backtest</option>
       </select>
     </label>
@@ -86,6 +87,7 @@
     <label class="g-rsi">RSI (h) <select id="rsin"><option>7</option><option>14</option><option>21</option></select></label>
     <label class="g-bb">Bands (h) <select id="bbn"><option>10</option><option>20</option><option>50</option></select></label>
     <label class="g-bb">Width <select id="bbk"><option value="1.5">1.5</option><option value="2">2</option><option value="2.5">2.5</option></select></label>
+    <label class="g-reg">Trend channel (σ) <select id="regk"><option value="1">1</option><option value="1.5">1.5</option><option value="2">2</option></select></label>
     <label class="g-bt">Rule
       <select id="rule">
         <option value="ma">Buy when fast avg &gt; slow avg</option>
@@ -315,12 +317,13 @@ function markCurveChips() { document.querySelectorAll('#curves .cchip').forEach(
 
 // ================= 2) one indicator chart =================
 const P = { ind:pref('lp_ind', 'none'), asset:pref('lp_indasset', 'XAU'), type:pref('lp_matype', 'SMA'), fast:pref('lp_mafast', 20), slow:pref('lp_maslow', 50),
-            rsi:pref('lp_rsin', 14), bbn:pref('lp_bbn', 20), bbk:pref('lp_bbk', 2), rule:pref('lp_rule', 'ma'), cost:pref('lp_cost', 0.05) };
+            rsi:pref('lp_rsin', 14), bbn:pref('lp_bbn', 20), bbk:pref('lp_bbk', 2), regk:pref('lp_regk', 2), rule:pref('lp_rule', 'ma'), cost:pref('lp_cost', 0.05) };
 const INFO = {
   ma:  ['Price with two moving averages', '▲ green = fast average crosses above slow (possible buy), ▼ red = crosses below (possible sell).'],
   rsi: ['RSI', 'Above 70: price rose fast and may be stretched. Below 30: it fell fast. Scale 0–100.'],
   macd:['MACD (12 / 26 / 9 hours)', 'MACD line crossing above its signal line = momentum turning up; below = turning down.'],
   bb:  ['Bollinger Bands', 'The band widens when the price swings a lot. Near the upper band = stretched up; near the lower = stretched down.'],
+  reg: ['Linear regression (trend line)', 'A straight line fitted to the price over the selected period, with a channel around it. Above the channel = well above its trend; below = well below. It describes the past, not the future.'],
   bt:  ['Backtest on your saved history', 'Starts at 100. Long only. Orange = the rule, grey = just holding. It shows what would have happened, not what will happen.']
 };
 function hourlySeries(key) {
@@ -360,6 +363,18 @@ function bollCalc(v, n, k) {
   return { mid, up, lo };
 }
 function indicators(p) { const m = macdCalc(p); return { p, fast:avg(p, P.type, P.fast), slow:avg(p, P.type, P.slow), rsi:rsiCalc(p, P.rsi), macd:m.macd, msig:m.sig, hist:m.hist, bb:bollCalc(p, P.bbn, P.bbk) }; }
+function regress(h, idx) {
+  const n = idx.length; if (n < 3) return null;
+  const t0 = h[idx[0]].t, xs = idx.map(i => (h[i].t - t0) / 3600000), ys = idx.map(i => h[i].p);
+  const mx = xs.reduce((a, b) => a + b, 0) / n, my = ys.reduce((a, b) => a + b, 0) / n;
+  let sxx = 0, sxy = 0, syy = 0;
+  for (let k = 0; k < n; k++) { const dx = xs[k] - mx, dy = ys[k] - my; sxx += dx * dx; sxy += dx * dy; syy += dy * dy; }
+  if (sxx === 0) return null;
+  const b = sxy / sxx, a = my - b * mx; let ssr = 0;
+  for (let k = 0; k < n; k++) { const e = ys[k] - (a + b * xs[k]); ssr += e * e; }
+  return { n, a, b, mean:my, r2: syy === 0 ? 0 : 1 - ssr / syy, sd: Math.sqrt(ssr / (n - 2)),
+           fit: i => a + b * ((h[i].t - t0) / 3600000), lastIdx: idx[n - 1], lastP: ys[n - 1] };
+}
 function backtest(ind, startIdx, cost) {
   const p = ind.p, n = p.length, d = Array(n).fill(0); let st = 0;
   for (let i = 0; i < n; i++) {
@@ -394,7 +409,7 @@ let iView = { h:[], show:[] };
 const iline = (label, data, color, extra) => Object.assign({ type:'line', label, data, borderColor:color, backgroundColor:color, borderWidth:1.8, pointRadius:0, tension:.1, spanGaps:true }, extra || {});
 function showGroups() {
   const g = (c, v) => document.querySelectorAll(c).forEach(e => e.style.display = v ? '' : 'none'), s = P.ind;
-  g('.g-ma', s === 'ma' || s === 'bt'); g('.g-rsi', s === 'rsi' || s === 'bt'); g('.g-bb', s === 'bb' || s === 'bt'); g('.g-bt', s === 'bt');
+  g('.g-ma', s === 'ma' || s === 'bt'); g('.g-rsi', s === 'rsi' || s === 'bt'); g('.g-bb', s === 'bb' || s === 'bt'); g('.g-reg', s === 'reg'); g('.g-bt', s === 'bt');
 }
 function renderIndicator() {
   showGroups();
@@ -435,6 +450,24 @@ function renderIndicator() {
   } else if (P.ind === 'bb') {
     ds = [ iline('Lower', pick(ind.bb.lo), 'rgba(77,171,247,.8)', { borderWidth:1 }), iline('Upper', pick(ind.bb.up), 'rgba(77,171,247,.8)', { borderWidth:1, fill:'-1', backgroundColor:'rgba(77,171,247,.12)' }),
            iline('Middle ' + P.bbn + 'h', pick(ind.bb.mid), '#ffffff', { borderWidth:1, borderDash:[5, 4] }), iline(a.name + ' price', pick(ind.p), a.color, { borderWidth:2 }) ];
+  } else if (P.ind === 'reg') {
+    const rg = regress(h, idx), K = P.regk;
+    if (rg) {
+      ds = [ iline('Lower −' + K + 'σ', show.map(i => rg.fit(i) - K * rg.sd), 'rgba(240,136,62,.7)', { borderWidth:1 }),
+             iline('Upper +' + K + 'σ', show.map(i => rg.fit(i) + K * rg.sd), 'rgba(240,136,62,.7)', { borderWidth:1, fill:'-1', backgroundColor:'rgba(240,136,62,.10)' }),
+             iline('Trend line', show.map(i => rg.fit(i)), '#f0883e', { borderWidth:2, borderDash:[6, 4] }),
+             iline(a.name + ' price', pick(ind.p), a.color, { borderWidth:2 }) ];
+      const perDay = rg.b * 24, pctDay = rg.mean ? perDay / rg.mean * 100 : 0, fl = rg.fit(rg.lastIdx), z = rg.sd > 0 ? (rg.lastP - fl) / rg.sd : 0;
+      const dirw = Math.abs(pctDay) < 0.005 ? 'flat' : perDay > 0 ? 'rising' : 'falling';
+      const where = Math.abs(z) <= K ? 'inside the channel' : z > 0 ? 'ABOVE the channel' : 'BELOW the channel';
+      const f = v => fmtVal(null, v), sg = v => (v >= 0 ? '+' : '−') + f(Math.abs(v));
+      stats = `Trend over this period: <b class="${perDay >= 0 ? 'up' : 'down'}">${dirw}</b> ${sg(perDay)} USD per day (${(pctDay >= 0 ? '+' : '') + pctDay.toFixed(2)}% per day).<br>` +
+        `Fit quality R² = <b>${rg.r2.toFixed(2)}</b> (1 = perfectly straight trend, 0 = none).<br>` +
+        `Latest price is <b>${z >= 0 ? '+' : '−'}${Math.abs(z).toFixed(1)}σ</b> from the line, ${where}.<br>` +
+        `If the trend simply continued: <b>${f(fl + 24 * rg.b)}</b> in 24 hours (an extrapolation, not a forecast).` +
+        (rg.r2 < 0.3 ? '<br><span class="warn">R² is low: no clear straight trend in this period.</span>' : '') +
+        (rg.n < 24 ? `<br><span class="warn">Only ${rg.n} points: try Week, Month or Year.</span>` : '');
+    } else stats = 'Not enough data in this period.';
   } else if (P.ind === 'bt') {
     yf = v => v.toFixed(1);
     if (idx.length > 2) {
@@ -460,7 +493,7 @@ function initIndicatorControls() {
     ASSETS.map(a => `<button class="alt cchip" data-key="${a.key}" style="color:${a.color}">${a.name}</button>`).join('');
   box.onclick = e => { const k = e.target.dataset.key; if (!k) return; P.asset = k; setPref('lp_indasset', k); mark(); renderIndicator(); };
   mark();
-  [['ind','ind',false],['matype','type',false],['mafast','fast',true],['maslow','slow',true],['rsin','rsi',true],['bbn','bbn',true],['bbk','bbk',true],['rule','rule',false]]
+  [['ind','ind',false],['matype','type',false],['mafast','fast',true],['maslow','slow',true],['rsin','rsi',true],['bbn','bbn',true],['bbk','bbk',true],['regk','regk',true],['rule','rule',false]]
     .forEach(([id, key, num]) => { const el = document.getElementById(id); el.value = String(P[key]);
       el.onchange = () => { P[key] = num ? Number(el.value) : el.value; setPref('lp_' + id, P[key]); renderIndicator(); if (id === 'ind' && ichart.resize) ichart.resize(); }; });
   const c = document.getElementById('cost'); c.value = P.cost;
